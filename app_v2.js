@@ -28,6 +28,7 @@ let recognitionReady = false;
 let audioBasePath = "./audio";
 let searchDecisionTimer = null;
 let openMicLoopAudio = null;
+const BASE_AUDIO_PATH = "./audio";
 
 const DEFAULT_AUDIO_DELAY_MS = 500;
 const DEFAULT_LISTEN_SECONDS = 7;
@@ -260,6 +261,13 @@ function applyVariables(text) {
     .replaceAll("{{parent_name}}", parentName);
 }
 
+function getAudioSrc(audioFile, useCache = true) {
+  if (useCache && audioBasePath && audioBasePath !== BASE_AUDIO_PATH) {
+    return `${audioBasePath}/${audioFile}`;
+  }
+  return `${BASE_AUDIO_PATH}/${audioFile}`;
+}
+
 function getSceneColor(scene) {
   if (!scene?.id) return "";
   for (const color of COLORS) {
@@ -377,7 +385,8 @@ function selectBranch(scene, transcript) {
 
 async function playAudioFile(audioFile, delayMs, text) {
   stopLoopAudio();
-  const src = `${audioBasePath}/${audioFile}`;
+  const cacheSrc = getAudioSrc(audioFile, true);
+  const baseSrc = getAudioSrc(audioFile, false);
   setStatus(`Playing: ${audioFile}`);
   setContent(`<strong>Audio:</strong> ${audioFile}<br /><em>${text || ""}</em>`);
 
@@ -388,7 +397,17 @@ async function playAudioFile(audioFile, delayMs, text) {
   if (currentAudio) {
     currentAudio.pause();
   }
-  currentAudio = new Audio(src);
+  currentAudio = new Audio(cacheSrc);
+  currentAudio.addEventListener(
+    "error",
+    () => {
+      if (cacheSrc !== baseSrc) {
+        currentAudio.src = baseSrc;
+        currentAudio.play().catch(() => {});
+      }
+    },
+    { once: true }
+  );
   await currentAudio.play();
   await new Promise((resolve) => {
     currentAudio.addEventListener("ended", resolve, { once: true });
@@ -413,10 +432,21 @@ function showOpenMic(scene) {
 
 function startLoopAudio(audioFile) {
   stopLoopAudio();
-  const src = `${audioBasePath}/${audioFile}`;
-  const audio = new Audio(src);
+  const cacheSrc = getAudioSrc(audioFile, true);
+  const baseSrc = getAudioSrc(audioFile, false);
+  const audio = new Audio(cacheSrc);
   audio.loop = true;
   audio.volume = 0.18;
+  audio.addEventListener(
+    "error",
+    () => {
+      if (cacheSrc !== baseSrc) {
+        audio.src = baseSrc;
+        audio.play().catch(() => {});
+      }
+    },
+    { once: true }
+  );
   audio.play().catch(() => {});
   openMicLoopAudio = audio;
 }
