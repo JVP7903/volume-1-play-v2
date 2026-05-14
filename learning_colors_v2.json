@@ -80,7 +80,7 @@
     {
       "id": "start_song",
       "type": "audio",
-      "audio_file": "start_song.mp3",
+      "audio_file": "intro_song.mp3",
       "next": "pink_parent_prompt"
     },
 
