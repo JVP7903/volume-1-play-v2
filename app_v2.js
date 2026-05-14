@@ -321,8 +321,12 @@ function isMeaningfulTranscript(text, scene) {
     return cleaned.length >= 1;
   }
 
+  if (isConfirmScene(scene)) {
+    return hasConfirm;
+  }
+
   if (hasConfirm || hasSearch || hasCount) return true;
-  return cleaned.length >= 3;
+  return cleaned.length >= 1;
 }
 
 function classifySearchDecision(transcript, scene) {
@@ -494,9 +498,7 @@ function handleTranscript(transcript, isFinal, scene) {
   }
 
   if (isCountScene(scene)) {
-    if (shouldTriggerCount(cleaned)) {
-      scheduleSilenceAdvance(SPEECH_END_SILENCE_MS);
-    }
+    scheduleSilenceAdvance(SPEECH_END_SILENCE_MS);
     return;
   }
 
