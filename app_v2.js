@@ -34,7 +34,7 @@ const DEFAULT_AUDIO_DELAY_MS = 500;
 const DEFAULT_LISTEN_SECONDS = 7;
 const MAX_LISTEN_MS = 7000;
 const SEARCH_DECISION_SILENCE_MS = 900;
-const SPEECH_END_SILENCE_MS = 900;
+const SPEECH_END_SILENCE_MS = 2000;
 const CONFIRM_SILENCE_AUTO_ADVANCE_MS = 5000;
 const ELEVENLABS_VOICE_ID = "eDSwXWQpjryYdVtrkP7I";
 const ELEVENLABS_MODEL = "eleven_v3";
@@ -182,7 +182,7 @@ function initRecognition() {
   }
   const rec = new SpeechRecognition();
   rec.continuous = true;
-  rec.interimResults = false;
+  rec.interimResults = true;
   rec.lang = "en-US";
   return rec;
 }
@@ -490,7 +490,10 @@ function handleTranscript(transcript, isFinal, scene) {
   clearListenTimeout();
   clearSilenceTimeout();
 
-  if (!isFinal) return;
+  if (!isFinal && !isConfirmScene(scene)) {
+    scheduleSilenceAdvance(SPEECH_END_SILENCE_MS);
+    return;
+  }
 
   if (scene?.id === "listen_intro_response") {
     scheduleSilenceAdvance(SPEECH_END_SILENCE_MS);
